@@ -58,7 +58,9 @@ train = train-train.mean()
 train = train/train.std()
 train = train/np.abs(train).max()
 target_onehot = np.zeros((target.shape[0],4))
-target_onehot[:,target - 769] = 1
+target_onehot[np.arange(len(target_onehot)),target - 769] = 1
+print(train.shape)
+print(target_onehot.shape)
 
 
 modelpath = '../../Project_Data/models/GAN_debug/%s/'%('WGAN_adaptlambclamp_CONV_CUB_10l_run%d'%task_ind)
@@ -96,9 +98,9 @@ z_vars_im = rng.normal(0,1,size=(1000,n_z)).astype(np.float32)
 
 for i_block in range(i_block_tmp,n_blocks):
     c = 0
-
-    train_tmp = discriminator.model.downsample_to_block(Variable(torch.from_numpy(train).cuda(),volatile=True),discriminator.model.cur_block).data.cpu()
-
+    torch.set_grad_enabled(False)
+    train_tmp = discriminator.model.downsample_to_block(Variable(torch.from_numpy(train).cuda()),discriminator.model.cur_block).data.cpu()
+    torch.set_grad_enabled(True)
     for i_epoch in range(i_epoch_tmp,block_epochs[i_block]):
         start = time.time()
         i_epoch_tmp = 0
@@ -117,7 +119,9 @@ for i_block in range(i_block_tmp,n_blocks):
                 batch_real = Variable(train_batches,requires_grad=True).cuda()
 
                 z_vars = rng.normal(0,1,size=(len(batches[it*n_critic+i_critic]),n_z)).astype(np.float32)
-                z_vars = Variable(torch.from_numpy(z_vars),volatile=True).cuda()
+                torch.set_grad_enabled(False)
+                z_vars = Variable(torch.from_numpy(z_vars)).cuda()
+                torch.set_grad_enabled(True)
                 batch_fake = Variable(generator(z_vars).data,requires_grad=True).cuda()
 
                 loss_d = discriminator.train_batch(batch_real,batch_fake)
