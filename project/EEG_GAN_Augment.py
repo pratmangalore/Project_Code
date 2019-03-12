@@ -3,6 +3,7 @@
 import os
 import joblib
 import sys
+import time
 sys.path.append("../GAN/")
 
 from braindecode.datautil.iterators import get_balanced_batches
@@ -40,19 +41,19 @@ torch.cuda.manual_seed_all(task_ind)
 random.seed(task_ind)
 rng = np.random.RandomState(task_ind)
 
-training_file = os.path('../../Project_Data/X_train_valid.npy')
-training_file_targets = os.path('../../Project_Data/y_train_valid.npy')
-testing_file = os.path('../../Project_Data/X_test.npy')
-testing_file_targets = os.path('../../Project_Data/y_test.npy')
-EEG_train_data = joblib.load(training_file)
-EEG_train_targets = joblib.load(training_file_targets)
-EEG_test_data = joblib.load(testing_file)
-EEG_test_targets = joblib.load(testing_file_targets)
+training_file = '../../Project_Data/X_train_valid.npy'
+training_file_targets = '../../Project_Data/y_train_valid.npy'
+testing_file = '../../Project_Data/X_test.npy'
+testing_file_targets = '../../Project_Data/y_test.npy'
+EEG_train_data = np.load(training_file)
+EEG_train_targets = np.load(training_file_targets)
+EEG_test_data = np.load(testing_file)
+EEG_test_targets = np.load(testing_file_targets)
 
 train = np.concatenate((EEG_train_data,EEG_test_data))
 target = np.concatenate((EEG_train_targets,EEG_test_targets))
 
-train = train[:,:,:,None]
+train = train[:,:22,:,None]
 train = train-train.mean()
 train = train/train.std()
 train = train/np.abs(train).max()
@@ -99,6 +100,7 @@ for i_block in range(i_block_tmp,n_blocks):
     train_tmp = discriminator.model.downsample_to_block(Variable(torch.from_numpy(train).cuda(),volatile=True),discriminator.model.cur_block).data.cpu()
 
     for i_epoch in range(i_epoch_tmp,block_epochs[i_block]):
+        start = time.time()
         i_epoch_tmp = 0
 
         if fade_alpha<1:
@@ -151,7 +153,7 @@ for i_block in range(i_block_tmp,n_blocks):
             plt.figure()
             plt.plot(freqs_tmp,np.log(fake_amps),label='Fake')
             plt.plot(freqs_tmp,np.log(train_amps),label='Real')
-            plt.title('Frequency Spektrum')
+            plt.title('Frequency Spectrum')
             plt.xlabel('Hz')
             plt.legend()
             plt.savefig(os.path.join(modelpath,modelname%jobid+'_fft_%d_%d.png'%(i_block,i_epoch)))
@@ -199,7 +201,8 @@ for i_block in range(i_block_tmp,n_blocks):
 
             generator.train()
             discriminator.train()
-
+        end = time.time()
+        print("Epoch %d took %.3f seconds!"%(i_epoch,end - start))
 
     fade_alpha = 0.
     generator.model.cur_block += 1
