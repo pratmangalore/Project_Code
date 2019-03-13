@@ -27,7 +27,7 @@ input_length = 768
 jobid = 0
 
 n_z = 200
-n_chans = 25
+n_chans = 22
 lr = 0.001
 n_blocks = 6
 rampup = 2000.
@@ -69,7 +69,7 @@ if not os.path.exists(modelpath):
     os.makedirs(modelpath)
 
 
-generator = Generator(1,n_z)
+generator = Generator(n_chans,n_z)
 discriminator = Discriminator(n_chans)
 
 generator.train_init(alpha=lr,betas=(0.,0.99))
