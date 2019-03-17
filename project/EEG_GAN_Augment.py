@@ -23,15 +23,15 @@ torch.backends.cudnn.benchmark=True
 
 n_critic = 5
 n_batch = 64
-input_length = 768
+input_length = 1000
 jobid = 0
 
 n_z = 200
-n_chans = 22
+n_chans = 1
 lr = 0.001
-n_blocks = 6
+n_blocks = 3
 rampup = 2000.
-block_epochs = [2000,4000,4000,4000,4000,4000]
+block_epochs = [2000,4000,4000]
 
 task_ind = 0#subj_ind
 
@@ -117,15 +117,15 @@ for i_block in range(i_block_tmp,n_blocks):
             for i_critic in range(n_critic):
                 train_batches = train_tmp[batches[it*n_critic+i_critic]]
                 batch_real = Variable(train_batches,requires_grad=True).cuda()
-                print(len(batches[it*n_critic+i_critic]),n_z)
+                #print(len(batches[it*n_critic+i_critic]),n_z)
                 z_vars = rng.normal(0,1,size=(len(batches[it*n_critic+i_critic]),n_z)).astype(np.float32)
-                print(z_vars.shape)
+                #print(z_vars.shape)
                 torch.set_grad_enabled(False)
                 z_vars = Variable(torch.from_numpy(z_vars)).cuda()
-                print(z_vars.shape)
+                #print(z_vars.shape)
                 torch.set_grad_enabled(True)
                 batch_fake = Variable(generator(z_vars).data,requires_grad=True).cuda()
-                print(batch_real.shape,batch_fake.shape)
+                #print(batch_real.shape,batch_fake.shape)
                 loss_d = discriminator.train_batch(batch_real,batch_fake)
                 assert np.all(np.isfinite(loss_d))
             z_vars = rng.normal(0,1,size=(n_batch,n_z)).astype(np.float32)
